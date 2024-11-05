@@ -30,13 +30,15 @@ source lib/helpers/functions/merge_all_md_files.sh
 display_big_title "NextJS Docs To PDF"
 
 # Fetch the latest version
-latest_version=$(get_latest_version $config__store_cache_file $config__api_endpoint_url $config__cache_duration "debug_false")
+latest_version=$(curl -s "https://api.github.com/repos/vercel/next.js/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
 # Get the last push date
-last_push_date=$(get_last_push_date $config__store_cache_file "debug_false")
+last_push_date=$(curl -s "https://api.github.com/repos/vercel/next.js/releases/latest" | grep '"published_at":' | sed -E 's/.*"([^"]+)".*/\1/')
 
 # Generate a unique ID using the latest version and the last push date
-unique_id="next-js--${latest_version}--${last_push_date}"
+unique_id="next-js--${latest_version}--${last_push_date//[:]/-}"
+
+# unique_id="next-js--${latest_version}--${last_push_date}"
 docs_folder="docs--$unique_id"
 
 # Print the values
@@ -92,7 +94,7 @@ const { marked } = require('marked');
 const puppeteer = require('puppeteer');
 
 // Read the Markdown file
-fs.promises.readFile('./work/$docs_folder.md', 'utf8')
+fs.promises.readFile('./$docs_folder.md', 'utf8')
   .then((data) => {
     // Convert Markdown to HTML
     const html = marked(data);
@@ -106,7 +108,7 @@ fs.promises.readFile('./work/$docs_folder.md', 'utf8')
             return page.setContent(html)
               .then(() => {
                 // Generate the PDF
-                return page.pdf({ path: './work/$docs_folder.pdf', format: 'A4' })
+                return page.pdf({ path: './$docs_folder.pdf', format: 'A4' })
                   .then(() => {
                     // Close the browser
                     return browser.close();
@@ -115,7 +117,7 @@ fs.promises.readFile('./work/$docs_folder.md', 'utf8')
           });
       })
       .then(() => {
-        console.log('Markdown converted to PDF and saved to ./work/$docs_folder.pdf');
+        console.log('Markdown converted to PDF and saved to ./$docs_folder.pdf');
       })
       .catch((error) => {
         console.error('Error converting to PDF:', error);

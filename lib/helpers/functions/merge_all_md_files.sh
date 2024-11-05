@@ -7,24 +7,28 @@ merge_md_files() {
     local directory="$1"
     local output_file="$2"
 
-    # Get all Markdown files in the specified directory
-    md_files=()
-    while IFS= read -r -d '' file; do
-        [[ $file == *.md ]] && md_files+=("$file")
-    done < <(find "$directory" -type f -name "*.md" -print0)
+    # Ensure the output directory exists
+    mkdir -p "$(dirname "$output_file")"
 
-    # Sort the Markdown files alphabetically
-    IFS=$'\n' md_files=($(sort <<<"${md_files[*]}"))
-
-    # Merge Markdown files into a single string
-    merged_content=""
-    for md_file in "${md_files[@]}"; do
-        content=$(<"$md_file")
-        merged_content+="$content\n\n"
+    # Find all .md and .mdx files and merge them
+    find "$directory" -type f \( -name "*.md" -o -name "*.mdx" \) | sort | while read -r md_file; do
+        echo "Merging file: $md_file"  # Debugging line
+        if [ -s "$md_file" ]; then
+            echo "File $md_file has content."
+            cat "$md_file" >> "$output_file"
+            echo -e "\n\n" >> "$output_file"  # Add spacing between files
+        else
+            echo "File $md_file is empty or could not be read."
+        fi
     done
 
-    # Write the merged content to a new Markdown file
-    echo -e "$merged_content" > "$output_file"
+    # Check if output file was created successfully
+    if [ -s "$output_file" ]; then
+        echo "Merged content written to $output_file"
+    else
+        echo "Error: The merged markdown file is empty."
+        exit 1
+    fi
 }
 
 merge_all_md_files() {

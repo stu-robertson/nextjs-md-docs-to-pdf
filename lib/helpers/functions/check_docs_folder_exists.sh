@@ -30,7 +30,7 @@ check_docs_folder_exists() {
             esac
         done
     else
-       flag="NOT_EXIST"
+        flag="NOT_EXIST"
     fi
 
     if [ "$flag" = "NOT_EXIST" ]; then
@@ -39,12 +39,17 @@ check_docs_folder_exists() {
 
     if [ "$flag" = "DELETED" ]; then
         "$display_global_info" "Docs folder removed successfully" "yes"
+        # Ensure that the directory is fully removed before proceeding
+        while [ -d "$folder_path" ]; do
+            sleep 1  # Wait until the folder is fully deleted
+        done
     fi
 
     if [ "$flag" = "DELETED" ] || [ "$flag" = "NOT_EXIST" ]; then
+        mkdir -p "$folder_path"  # Ensure directory is re-created for cloning
         "$display_global_info" "Clone the docs" "yes"
-        return 1
+        return 1  # Indicate the folder has been deleted or doesn't exist
     else
-        return 2
+        return 2  # Indicate the folder already exists and should not be cloned again
     fi
 }
